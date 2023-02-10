@@ -14,27 +14,40 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
     if (ref.current) {
       let { height, width } = ref.current.getBoundingClientRect();
 
-      const links: any = data['links'].map((d) => Object.assign({}, d));
-      const nodes: any = data['nodes'].map((d) => Object.assign({}, d));
+      const links: any = data['links'];
+      const nodes: any = data['nodes'];
 
       // The drag function is configured here and eventually bound to the nodes
+      // Useful stackoverflow answer: https://stackoverflow.com/questions/42605261/d3-event-active-purpose-in-drag-dropping-circles
       const drag = (simulation) => {
+        console.log('drag function called');
+
+        console.log('drag event ', d3.event?.active);
+
         const dragstarted = (d) => {
-          if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+          console.log('start drag');
+          if (d.active !== 0) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
           d.fy = d.y;
         };
 
         const dragged = (d) => {
-          d.fx = d3.event.x;
-          d.fy = d3.event.y;
+          console.log('dragged');
+          d.fx = d.x;
+          d.fy = d.y;
         };
 
         const dragended = (d) => {
-          if (!d3.event.active) simulation.alphaTarget(0);
+          console.log('end drag');
+          if (d.active === 0) simulation.alphaTarget(0);
           d.fx = null;
           d.fy = null;
         };
+
+        console.log(
+          'function',
+          d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended)
+        );
 
         return d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended);
       };
@@ -61,7 +74,6 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       const link = svg
         .append('g')
         .selectAll('line')
-        .append('line')
         .data(links)
         .join('line')
         .attr('stroke', '#ffe3d8')
@@ -72,7 +84,6 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       const node = svg
         .append('g')
         .selectAll('circle')
-        .append('circle')
         .data(nodes, (d) => d)
         .join('circle')
         .attr('stroke', '#ffeb7d')
@@ -83,17 +94,17 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
         .call(drag(simulation));
 
       // Create the event listeners to the nodes
-      node
-        .on('mouseover', (d) => {
-          addTooltip(nodeHoverTooltip, d, d3.event.pageX, d3.event.pageY);
-        })
-        .on('mouseout', () => {
-          removeTooltip();
-        })
-        .on('click', (d) => {
-          setRecipient(d);
-          showMessageContainer(getNodeInfo, d);
-        });
+      // node
+      //   .on('mouseover', (d) => {
+      //     addTooltip(nodeHoverTooltip, d, d3.event.pageX, d3.event.pageY);
+      //   })
+      //   .on('mouseout', () => {
+      //     removeTooltip();
+      //   })
+      //   .on('click', (d) => {
+      //     setRecipient(d);
+      //     showMessageContainer(getNodeInfo, d);
+      //   });
 
       simulation.on('tick', () => {
         link
@@ -141,7 +152,7 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       //   .join('');
       // console.log(csvtext3);
     }
-  }, [ref]);
+  }, []);
 
   return (
     <div style={{ height: '100vh' }}>
