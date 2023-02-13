@@ -19,38 +19,26 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
 
       // The drag function is configured here and eventually bound to the nodes
       // Useful stackoverflow answer: https://stackoverflow.com/questions/42605261/d3-event-active-purpose-in-drag-dropping-circles
-      const drag = (simulation) => {
-        console.log('drag function called');
+      function drag(simulation) {
+        function dragstarted(event) {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          event.subject.fx = event.subject.x;
+          event.subject.fy = event.subject.y;
+        }
 
-        console.log('drag event ', d3.event?.active);
+        function dragged(event) {
+          event.subject.fx = event.x;
+          event.subject.fy = event.y;
+        }
 
-        const dragstarted = (d) => {
-          console.log('start drag');
-          if (d.active !== 0) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        };
-
-        const dragged = (d) => {
-          console.log('dragged');
-          d.fx = d.x;
-          d.fy = d.y;
-        };
-
-        const dragended = (d) => {
-          console.log('end drag');
-          if (d.active === 0) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        };
-
-        console.log(
-          'function',
-          d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended)
-        );
+        function dragended(event) {
+          if (!event.active) simulation.alphaTarget(0);
+          event.subject.fx = null;
+          event.subject.fy = null;
+        }
 
         return d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended);
-      };
+      }
 
       // The simulation will be call for every tick and drag event
       const simulation = d3
