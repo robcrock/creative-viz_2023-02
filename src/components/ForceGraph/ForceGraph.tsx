@@ -51,22 +51,25 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
 
       // Add the tooltip element to the DOM
       const tooltip = chartRef.current;
-      if (!tooltip) {
+
+      if (tooltip) {
+        console.log('Inside tooltip div block');
         const tooltipDiv = document.createElement('div');
         tooltipDiv.classList.add(styles.tooltip);
         tooltipDiv.style.opacity = '0';
         tooltipDiv.id = 'graph-tooltip';
         document.body.appendChild(tooltipDiv);
       }
+
       const div = d3.select('#graph-tooltip');
 
       // Style and position the tooltip on hover
-      const addTooltip = (hoverTooltip, d, x, y) => {
+      const addTooltip = (event, label) => {
         div.transition().duration(200).style('opacity', 0.9);
         div
-          .html(hoverTooltip(d))
-          .style('left', `${x}px`)
-          .style('top', `${y - 28}px`);
+          .html((d) => `<div>${label}</div>`)
+          .style('left', `${event.pageX + 4}px`)
+          .style('top', `${event.pageY - 32}px`);
       };
 
       // Only show the message contain when a single skill is selected
@@ -127,19 +130,14 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
         .call(drag(simulation));
 
       node
-        .on('mouseover', (d) => {
-          console.log('mouseover', d);
-          // addTooltip((node) => `<div>${node.name}</div>`, d, d3.event.pageX, d3.event.pageY);
+        .on('mouseover', (event, { label }) => {
+          addTooltip(event, label);
         })
         .on('mouseout', () => {
-          console.log('mouseout');
-          // removeTooltip();
+          removeTooltip();
         })
-        .on('click', (d) => {
+        .on('click', (event, d) => {
           console.log('clicked', d);
-          console.log('target', d.target);
-          // setRecipient(d);
-          // showMessageContainer(getNodeInfo, d);
         });
 
       // Add a tick event to the simulation that updates the position of the links and nodes
