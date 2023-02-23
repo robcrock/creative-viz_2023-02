@@ -188,7 +188,7 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
   return (
     <div style={{ height: '100vh' }}>
       <div ref={tooltipRef}></div>
-      <svg viewBox="-415,-492,830,984">
+      <svg width={600} height={600} viewBox="-320, -320, 600, 600">
         <g>
           {animatedLinks.map((link) => (
             <line
