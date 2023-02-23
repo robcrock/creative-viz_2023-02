@@ -6,6 +6,8 @@ import * as d3 from 'd3';
 // https://dev.to/gilfink/creating-a-force-graph-using-react-and-d3-76c
 // The react way
 // https://reactfordataviz.com/articles/force-directed-graphs-with-react-and-d3v7/#
+// Bostock example
+// https://observablehq.com/@d3/force-directed-graph
 
 type SimpleForceGraphProps = {
   data: Record<any, any>;
@@ -13,47 +15,29 @@ type SimpleForceGraphProps = {
 
 const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
   const { links, nodes } = data;
-  // console.log(nodes);
-  // Create a reference to the chart container
-  const chartRef = useRef(null);
   // Create a reference to the tooltip container
   const tooltipRef = useRef(null);
 
-  // const createSimulation = (nodes, links) => {
-  //   return d3
-  //     .forceSimulation(nodes)
-  //     .force(
-  //       'link',
-  //       d3.forceLink(links).id((d) => d.id)
-  //     )
-  //     .force('charge', d3.forceManyBody().strength(-150))
-  //     .force('x', d3.forceX(0.1))
-  //     .force('y', d3.forceY(0.1))
-  //     .force('center', d3.forceCenter());
-  // };
-
-  const [animatedNodes, setAnimatedNodes] = useState([]);
-  const [animatedLinks, setAnimatedLinks] = useState([]);
+  const [animatedNodes, setAnimatedNodes] = useState(nodes);
+  const [animatedLinks, setAnimatedLinks] = useState(links);
 
   // re-create animation every time nodes change
   useEffect(() => {
     // Construct the forces
-    const forceNode = d3.forceManyBody().strength(-150);
+    const forceNode = d3.forceManyBody().strength(-100);
     const forceLink = d3.forceLink(links).id((d) => d.id);
 
     const simulation = d3
       .forceSimulation(nodes)
+      .force('x', d3.forceX(0.5))
+      .force('y', d3.forceY(0.5))
       .force('link', forceLink)
       .force('charge', forceNode)
-      .force('x', d3.forceX(0.1))
-      .force('y', d3.forceY(0.1))
       .force('center', d3.forceCenter());
 
     // update state on every frame
     simulation.on('tick', () => {
-      console.log('sim', simulation);
       setAnimatedNodes([...simulation.nodes()]);
-      // setAnimatedLinks([...simulation.links()]);
     });
 
     // copy nodes into simulation
@@ -204,24 +188,31 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
   return (
     <div style={{ height: '100vh' }}>
       <div ref={tooltipRef}></div>
-      {/* <div style={{ height: '100%' }} ref={chartRef}></div> */}
       <svg viewBox="-415,-492,830,984">
         <g>
-          {animatedNodes.map((node) => (
-            <circle cx={node.x} cy={node.y} r={5} key={node.id} stroke="black" fill="transparent" />
-          ))}
-        </g>
-        <g>
           {animatedLinks.map((link) => (
-            <circle
+            <line
               key={link.id}
               x1={link.source.x}
               y1={link.source.y}
               x2={link.target.x}
               y2={link.target.y}
-              stroke="#ffe3d8"
+              stroke="#ccc"
               strokeOpacity={1}
               strokeWidth={1}
+            />
+          ))}
+        </g>
+        <g>
+          {animatedNodes.map((node) => (
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={6}
+              key={node.id}
+              stroke="black"
+              strokeWidth={2}
+              fill="#666"
             />
           ))}
         </g>
