@@ -1,16 +1,38 @@
 import React, { useEffect, useRef } from 'react';
+import { SimulationNodeDatum } from 'd3-force';
 import * as d3 from 'd3';
 import styles from './forceGraph.module.css';
+import { DataObjectType, NodeType } from './types';
+import { SimulationLinkDatum } from 'd3';
 
 type SimpleForceGraphProps = {
-  data: Record<any, any>;
+  data: DataObjectType;
 };
+
+interface MyNodeDatum extends SimulationNodeDatum {
+  id: string | number;
+}
+
+interface MyLinkDatum extends SimulationLinkDatum<MyNodeDatum> {
+  id: string | number;
+  source: {
+    id: string | number;
+    x: number;
+    y: number;
+  };
+  target: {
+    id: string | number;
+    x: number;
+    y: number;
+  };
+  value: number;
+}
 
 const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
   // Create a reference to the chart container
-  const chartRef = useRef(null);
+  const chartRef = useRef<SVGSVGElement>(null);
   // Create a reference to the tooltip container
-  const tooltipRef = useRef(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Check if the chart container reference exists
@@ -22,8 +44,8 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       const nodesData = data['nodes'];
 
       // Define the drag function
-      function drag(simulation) {
-        function dragstarted(event) {
+      function drag(simulation: any) {
+        function dragstarted(event: any) {
           // If the event is not active, increase the simulation's alpha target
           if (!event.active) simulation.alphaTarget(0.3).restart();
           // Store the subject's initial x and y positions
@@ -31,13 +53,13 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
           event.subject.fy = event.subject.y;
         }
 
-        function dragged(event) {
+        function dragged(event: any) {
           // Update the subject's x and y positions
           event.subject.fx = event.x;
           event.subject.fy = event.y;
         }
 
-        function dragended(event) {
+        function dragended(event: any) {
           // If the event is not active, reset the simulation's alpha target
           if (!event.active) simulation.alphaTarget(0);
           // Reset the subject's x and y positions
@@ -60,37 +82,12 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       }
       const div = d3.select('#graph-tooltip');
 
-      // Style and position the tooltip on hover
-      const addTooltip = (hoverTooltip, d, x, y) => {
-        div.transition().duration(200).style('opacity', 0.9);
-        div
-          .html(hoverTooltip(d))
-          .style('left', `${x}px`)
-          .style('top', `${y - 28}px`);
-      };
-
-      // Only show the message contain when a single skill is selected
-      const showMessageContainer = (getNodeInfo, d) => {
-        if (skillsData.length > 1) {
-          setActiveStyle('text-inactive');
-        } else {
-          setActiveStyle('text-active');
-        }
-        if (d.group === 'user') {
-          getNodeInfo(d);
-        }
-      };
-
-      const removeTooltip = () => {
-        div.transition().duration(200).style('opacity', 0);
-      };
-
       // Create the simulation
       const simulation = d3
-        .forceSimulation(nodesData)
+        .forceSimulation(nodesData as unknown as MyNodeDatum[])
         .force(
           'link',
-          d3.forceLink(linksData).id((d) => d.id)
+          d3.forceLink(linksData as unknown as MyLinkDatum[]).id((d) => (d as MyLinkDatum).id)
         )
         .force('charge', d3.forceManyBody().strength(-150))
         .force('x', d3.forceX(0.1))
@@ -117,14 +114,14 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       const node = svg
         .append('g')
         .selectAll('circle')
-        .data(nodesData, (d) => d)
+        .data(nodesData, (_, i) => i)
         .join('circle')
         .attr('stroke', '#ffeb7d')
         .attr('stroke-width', 2)
         .attr('r', (d) => (d.level === '2' ? +d.group * 0.2 : 2))
         .attr('fill', '#f2d974')
         .attr('fill-opacity', 1)
-        .call(drag(simulation));
+        .call(drag(simulation) as any);
 
       node
         .on('mouseover', (d) => {
@@ -145,10 +142,10 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
       // Add a tick event to the simulation that updates the position of the links and nodes
       simulation.on('tick', () => {
         link
-          .attr('x1', (d) => d.source.x)
-          .attr('y1', (d) => d.source.y)
-          .attr('x2', (d) => d.target.x)
-          .attr('y2', (d) => d.target.y);
+          .attr('x1', (d) => (d as unknown as MyLinkDatum).source.x)
+          .attr('y1', (d) => (d as unknown as MyLinkDatum).source.y)
+          .attr('x2', (d) => (d as unknown as MyLinkDatum).target.x)
+          .attr('y2', (d) => (d as unknown as MyLinkDatum).target.y);
 
         node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
       });
@@ -159,7 +156,7 @@ const SimpleForceGraph: React.FC<SimpleForceGraphProps> = ({ data }) => {
   return (
     <div style={{ height: '100vh' }}>
       <div ref={tooltipRef}></div>
-      <div style={{ height: '100%' }} ref={chartRef}></div>
+      <svg ref={chartRef} height="100%" width="100%"></svg>
     </div>
   );
 };
